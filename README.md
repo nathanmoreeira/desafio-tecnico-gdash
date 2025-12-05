@@ -1,4 +1,4 @@
-# Desafio Técnico GDASH 2025.02 - [Nathan Moreira de Andrade]
+# Desafio Técnico GDASH 2025.02 - Nathan Moreira de Andrade
 
 ## Como Iniciar a Aplicação (Docker Compose)
 
