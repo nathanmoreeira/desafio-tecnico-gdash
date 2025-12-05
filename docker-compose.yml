@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # 1. Serviço RabbitMQ (Message Broker)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      # Porta AMQP (Para o Worker Go e o Collector Python se conectarem)
+      - "5672:5672"
+      # Porta do Painel de Gerenciamento Web (Acesse em http://localhost:15672)
+      - "15672:15672"
+    environment:
+      # Definindo credenciais padrão para simplificar. Você pode (e deve) mudar.
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      # Volume para persistir dados, caso precise reiniciar o container.
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # 2. Serviço MongoDB (Banco de Dados NoSQL)
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      # Porta padrão do MongoDB
+      - "27017:27017"
+    volumes:
+      # Volume para persistir dados do banco.
+      - mongodb_data:/data/db
+
+    # ... seus serviços mongodb e rabbitmq estão aqui
+
+  # 3. Serviço Go Worker (Consumer)
+  go_worker:
+    # Instrução para construir a imagem a partir da sua pasta go_worker
+    build:
+      context: ./go_worker
+      dockerfile: Dockerfile
+      args:
+        # CRÍTICO: Resolve a falha de rede na compilação
+        - GOPROXY=https://proxy.golang.org
+    container_name: go_worker
+    # CRÍTICO: Garante que o Worker só inicie após o RabbitMQ estar de pé
+    depends_on:
+      - rabbitmq
+    environment:
+      # Variáveis de ambiente para o Worker (úteis no código Go)
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+    # O Worker é interno e não precisa expor portas
+
+  python_collector:
+    build:
+      context: ./python_collector
+      dockerfile: Dockerfile
+    container_name: python_collector
+    restart: always
+    # CRÍTICO: Garante que o RabbitMQ inicie primeiro, já que o Python precisa dele
+    depends_on:
+      - rabbitmq 
+    environment:
+      # Você pode adicionar variáveis de ambiente aqui, como chaves de API, se necessário.
+      # Por enquanto, não precisamos de nenhuma, mas é uma boa prática manter o bloco.
+      TZ: America/Sao_Paulo
+
+  nestjs_api:
+    build:
+      context: ./nestjs_api
+      dockerfile: Dockerfile
+    container_name: nestjs_api
+    ports:
+      - "3000:3000" # Libera a porta para você acessar no navegador
+    depends_on:
+      - mongodb
+      - rabbitmq
+    environment:
+      TZ: America/Sao_Paulo
+
+# Definição dos Volumes
+volumes:
+  rabbitmq_data:
+  mongodb_data:
