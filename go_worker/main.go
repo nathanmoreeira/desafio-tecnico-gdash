@@ -11,8 +11,7 @@ import (
 
 const (
 	QUEUE_NAME = "weather_queue"
-	// CRÍTICO: O Go chamará o serviço 'nestjs_api' dentro da rede do Docker
-	API_URL = "http://nestjs_api:3000/api/weather/logs"
+	API_URL    = "http://nestjs_api:3000/api/weather/logs"
 )
 
 func failOnError(err error, msg string) {
@@ -74,7 +73,6 @@ func main() {
 	go func() {
 		for d := range msgs {
 			log.Printf(" [x] Recebido da Fila: %s", d.Body)
-			// TAREFA 7: Enviar para o NestJS
 			sendToAPI(d.Body)
 		}
 	}()

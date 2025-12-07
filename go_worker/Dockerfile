@@ -1,5 +1,4 @@
 # -- Stage 1: Construção (Build Stage) --
-# Agora usamos a versão 1.25.5, compatível com seu go.mod
 FROM golang:1.25-alpine AS builder 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -10,7 +9,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o worker ./main.go
 
 # -- Stage 2: Produção (Final Stage) --
-# Usamos uma imagem base minúscula
+# Usa uma imagem base minúscula
 FROM alpine:latest
 ENV TZ=America/Sao_Paulo
 WORKDIR /root/

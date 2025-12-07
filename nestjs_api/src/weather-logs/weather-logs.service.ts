@@ -20,7 +20,7 @@ export class WeatherLogsService {
     return this.weatherLogModel.find().sort({ timestamp: -1 }).exec();
   }
 
-  // <<< NOVA FUNÇÃO: IA SIMBÓLICA (INSIGHTS) >>>
+  // FUNÇÃO IA SIMBÓLICA (INSIGHTS)
   async getInsights() {
     // 1. Busca os últimos 10 registros para análise
     const logs = await this.weatherLogModel
@@ -48,7 +48,7 @@ export class WeatherLogsService {
     if (current > old + 0.5) trend = 'Tendência de Aquecimento 📈';
     if (current < old - 0.5) trend = 'Tendência de Resfriamento 📉';
 
-    // 4. Regras de Alerta (Thresholds)
+    // 4. Regras de Alerta
     let alert = 'Condições Normais ✅';
     if (current > 32) alert = 'ALERTA: Calor Excessivo 🔥';
     if (current < 15) alert = 'ALERTA: Baixa Temperatura ❄️';

@@ -4,12 +4,10 @@ import json
 import time
 
 # Constantes de Configuração
-# CRÍTICO: 'rabbitmq' é o nome do serviço no docker-compose
 RABBITMQ_HOST = 'rabbitmq' 
 QUEUE_NAME = 'weather_queue'
 
-# Configuração da API de Clima (Exemplo: Open-Meteo, São Paulo)
-# Você pode usar o OpenWeather, mas precisará de uma chave de API.
+# Configuração da API de Clima
 WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,weather_code&timezone=America%2FSao_Paulo"
 
 def fetch_weather_data():
@@ -69,8 +67,8 @@ def main():
                 if weather_data:
                     connect_and_publish(channel, weather_data)
                 
-                # Intervalo de envio (Usamos 5s para testes, mude para 3600s na entrega final)
-                time.sleep(5) 
+                # Intervalo de envio
+                time.sleep(3600) 
                 
         except pika.exceptions.AMQPConnectionError as e:
             print(f"ERRO: Conexão com RabbitMQ perdida. Tentando reconectar em 5s...")

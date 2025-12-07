@@ -11,7 +11,7 @@ services:
       # Porta do Painel de Gerenciamento Web (Acesse em http://localhost:15672)
       - "15672:15672"
     environment:
-      # Definindo credenciais padrão para simplificar. Você pode (e deve) mudar.
+      # Definindo credenciais padrão para simplificar.
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
       RABBITMQ_DEFAULT_VHOST: /
@@ -30,8 +30,6 @@ services:
       # Volume para persistir dados do banco.
       - mongodb_data:/data/db
 
-    # ... seus serviços mongodb e rabbitmq estão aqui
-
   # 3. Serviço Go Worker (Consumer)
   go_worker:
     # Instrução para construir a imagem a partir da sua pasta go_worker
@@ -39,14 +37,14 @@ services:
       context: ./go_worker
       dockerfile: Dockerfile
       args:
-        # CRÍTICO: Resolve a falha de rede na compilação
+        # Resolve a falha de rede na compilação
         - GOPROXY=https://proxy.golang.org
     container_name: go_worker
-    # CRÍTICO: Garante que o Worker só inicie após o RabbitMQ estar de pé
+    # Garante que o Worker só inicie após o RabbitMQ estar de pé
     depends_on:
       - rabbitmq
     environment:
-      # Variáveis de ambiente para o Worker (úteis no código Go)
+      # Variáveis de ambiente para o Worker
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
     # O Worker é interno e não precisa expor portas
@@ -57,12 +55,10 @@ services:
       dockerfile: Dockerfile
     container_name: python_collector
     restart: always
-    # CRÍTICO: Garante que o RabbitMQ inicie primeiro, já que o Python precisa dele
+    # Garante que o RabbitMQ inicie primeiro, já que o Python precisa dele
     depends_on:
       - rabbitmq 
     environment:
-      # Você pode adicionar variáveis de ambiente aqui, como chaves de API, se necessário.
-      # Por enquanto, não precisamos de nenhuma, mas é uma boa prática manter o bloco.
       TZ: America/Sao_Paulo
 
   nestjs_api:
