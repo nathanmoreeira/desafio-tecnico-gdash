@@ -49,6 +49,7 @@ services:
       RABBITMQ_PORT: 5672
     # O Worker é interno e não precisa expor portas
 
+  # 4. Serviço Python Collector (Producer)
   python_collector:
     build:
       context: ./python_collector
