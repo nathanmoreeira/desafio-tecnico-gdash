@@ -29,20 +29,18 @@ interface InsightsData {
 }
 
 function App() {
-  // Tenta pegar o token salvo no navegador ao iniciar
   const [token, setToken] = useState<string | null>(localStorage.getItem('gdash_token'));
-  
   const [logs, setLogs] = useState<WeatherLog[]>([])
   const [insights, setInsights] = useState<InsightsData | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Função chamada quando o Login.tsx tem sucesso
+  // Login com Sucesso
   const handleLoginSuccess = (newToken: string) => {
-    localStorage.setItem('gdash_token', newToken); // Salva para não perder ao recarregar
+    localStorage.setItem('gdash_token', newToken);
     setToken(newToken);
   }
 
-  // Função de Sair
+  // Logout
   const handleLogout = () => {
     localStorage.removeItem('gdash_token');
     setToken(null);
@@ -50,13 +48,12 @@ function App() {
     setInsights(null);
   }
 
-  // Busca dados, enviando o Token
+  // Buscar Dados (Protegido)
   const fetchData = async () => {
     if (!token) return;
 
     setLoading(true)
     try {
-      // Header de Autorização
       const headers = { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -64,7 +61,6 @@ function App() {
 
       const resLogs = await fetch('http://localhost:3000/api/weather/logs', { headers })
       
-      // Se o token venceu ou é inválido (401), faz logout forçado
       if (resLogs.status === 401) {
         handleLogout();
         return;
@@ -86,7 +82,27 @@ function App() {
     }
   }
 
-  // Efeito que roda quando o token muda (Login) ou inicia
+  const downloadCSV = () => {
+    if (!logs.length) return
+
+    const headers = ["Data/Hora,Cidade,Temperatura (C),Condicao WMO"]
+    const rows = logs.map(log => {
+      const date = new Date(log.timestamp * 1000).toLocaleString('pt-BR').replace(',', '')
+      return `${date},${log.city},${log.temperature_c},${log.weather_code}`
+    })
+
+    const csvContent = [headers, ...rows].join("\n")
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'relatorio_gdash.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   useEffect(() => {
     if (token) {
       fetchData()
@@ -95,17 +111,15 @@ function App() {
     }
   }, [token])
 
-  // Renderização, sem token mostra o Login.
   if (!token) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Renderização do Dashboard (Só aparece se tiver token)
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Cabeçalho com Logout */}
+        {/* Cabeçalho */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">GDASH Weather</h1>
@@ -113,16 +127,27 @@ function App() {
           </div>
           
           <div className="flex gap-3">
-            <Button variant="destructive" onClick={handleLogout}>
-              Sair 🚪
+             {/* BOTÃO CSV */}
+            <Button 
+              variant="outline" 
+              onClick={downloadCSV} 
+              disabled={logs.length === 0}
+              className="border-slate-300 hover:bg-slate-100 text-slate-700"
+            >
+              Baixar CSV 📥
             </Button>
+
             <Button onClick={fetchData} disabled={loading}>
               {loading ? 'Analisando...' : 'Atualizar'}
+            </Button>
+
+            <Button variant="destructive" onClick={handleLogout}>
+              Sair 🚪
             </Button>
           </div>
         </div>
 
-        {/* --- SEÇÃO DE IA --- */}
+        {/* SEÇÃO DE IA */}
         {insights && (
           <Card className="border-l-4 border-l-indigo-500 shadow-md animate-in fade-in zoom-in duration-300">
             <CardHeader className="pb-2">
@@ -136,7 +161,14 @@ function App() {
           </Card>
         )}
 
-        {/* Tabela de Dados */}
+        {/* Cards Básicos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <Card><CardHeader><CardTitle>Temp. Atual</CardTitle></CardHeader><CardContent><div className="text-4xl font-bold">{logs[0]?.temperature_c.toFixed(1)}°C</div></CardContent></Card>
+           <Card><CardHeader><CardTitle>Status</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">Online</div><p className="text-xs text-slate-500">RabbitMQ Connected</p></CardContent></Card>
+           <Card><CardHeader><CardTitle>Total Processado</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{logs.length}</div></CardContent></Card>
+        </div>
+
+        {/* Tabela */}
         <Card>
           <CardHeader><CardTitle>Últimos Registros</CardTitle></CardHeader>
           <CardContent>
